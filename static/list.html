@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- Latest compiled and minified CSS -->
+<link href="//cdn.bootcss.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.0/bootstrap-table.min.css">
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="http://rawgit.com/vitalets/x-editable/master/dist/bootstrap3-editable/css/bootstrap-editable.css">
+
+<script src="http://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+<script src="http://issues.wenzhixin.net.cn/bootstrap-table/assets/bootstrap/js/bootstrap.min.js"></script>
+<!-- Latest compiled and minified JavaScript -->
+<script src="http://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.0/bootstrap-table.min.js"></script>
+
+<!-- Latest compiled and minified Locales -->
+<script src="http://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.11.0/locale/bootstrap-table-zh-CN.min.js"></script>
+
+<!-- Latest compiled and minified Locales -->
+<script src="http://issues.wenzhixin.net.cn/bootstrap-table/assets/bootstrap-table/src/extensions/editable/bootstrap-table-editable.js"></script>
+
+<!-- Latest compiled and minified Locales -->
+<script src="http://rawgit.com/vitalets/x-editable/master/dist/bootstrap3-editable/js/bootstrap-editable.js"></script>
+<style>
+	.col-md-12{margin-top:16px;margin-bottom:16px;}
+</style>
+</head>
+
+<body>
+	
+	<div class="col-md-12">
+        <button class="btn btn-default" id="add">新增</button>
+    </div>
+          <!--data-search="true"
+           data-show-refresh="true"
+           data-show-toggle="true"
+           data-show-columns="true"
+           data-show-export="true"
+           data-detail-view="true"
+           data-show-footer="false"
+           data-detail-formatter="detailFormatter"//格式化详细视图
+           data-page-list="[10, 25, 50, 100, ALL]" 
+           data-pagination="false"
+           data-side-pagination="server"
+           data-show-pagination-switch="true"
+           -->
+	<table id="table"
+           data-toolbar="#toolbar"
+           data-search="false"
+           data-show-refresh="false"
+           data-show-toggle="false"
+           data-show-columns="false"
+           data-show-export="false"
+           data-detail-view="false"
+           data-id-field="id"
+           data-page-list="[10, 25, 50, 100, ALL]"
+           data-show-footer="false"
+           data-side-pagination="client"
+           data-url="/Quartz/"
+           data-response-handler="responseHandler"
+           >
+    </table>
+<script>
+	    
+	    function responseHandler(res) {
+	       
+	        return res;
+	    }
+
+	    function load(method,str,callback){
+	    	$.ajax({
+	    		"contentType":"application/json",
+	    		"data":str,
+	    		"url":"/Quartz",
+	    		"type":method,
+	    		"success":function(json){
+	    			callback(json)
+	    		}
+	    	})
+	    }
+
+	    function operateFormatter(value, row, index) {
+	    	var $edit=$('<a class="remove" href="javascript:void(0)" title="Remove"><i class="glyphicon glyphicon-remove"></i></a>');
+	    	
+    		var str ='{';
+    		
+    		$.each(row,function(key,data){
+    			str+='"'+key+'":"'+data+'",'
+    		})
+    		
+    		str = str.substring(0,str.length-1)
+    		
+    		str+='}';
+   			
+    		console.log(str)
+	    	$edit.attr("data-val",str)
+	    	return [$edit[0].outerHTML].join(' ');
+	    }
+	    function getHeight() {
+	      return $(window).height();
+	    }
+	    function onloadsuccess(){
+	    	
+	    	$('#add').unbind().click(function(){
+	    		rowFormatter(['express','triggerName','triggerGroup','interface','parameters']);
+	    	});
+	    	$('.remove').click(function(){
+	    		
+	    		load("DELETE",$(this).attr("data-val"),function(json){
+	    			$('#table').bootstrapTable("refresh")
+	    		})
+	    	})
+	 
+	    }
+	    var rowFormatter = function(arr){
+
+	    	$tr= $('<tr id="new"/>');
+	    	$.each(arr,function(i,e){
+	    		$td=$('<td align="center"/>')
+	    		$input = $('<input type="text"/>').attr("name",e)
+	    		$td.append($input)
+	    		$tr.append($td);
+	    	})
+	    	$td = $('<td />')
+	    	$td.append($('<a href=javascript:void(0)>确认</a>'))
+	    	$td.append($('<a href=javascript:void(0)>取消</a>'))
+	    	$td.find("a:first").css("margin-left","5px").click(function(){
+	    		$input=$(this).parents('tr').find('input')
+	    		var str ='{';
+	    		
+	    		$input.each(function(){
+	    			str+='"'+$(this).attr('name')+'":"'+$(this).val()+'",'
+	    		})
+	    		
+	    		str = str.substring(0,str.length-1)
+	    		
+	    		str+='}';
+	    		
+	    		load("PUT",str,function(json){
+	    			$('#table').bootstrapTable("refresh")
+	    		})
+	    	})
+	    	$td.find("a:last").css("margin-left","5px").click(function(){
+	    		$(this).parents('tr').remove();
+	    		$('#table').bootstrapTable("refresh")
+	    	})
+	    	$tr.append($td);	
+	    	$('#table .no-records-found').remove();	
+	    	$('#table #new').remove();	
+	    	$('#table').append($tr)	
+	    	
+	    }
+	    
+	    /*function onEditableInit(field,row,$el,editable){
+	    	//debugger
+	    	console.log(this)
+	    }*/
+	    function onEditableSave(field,row,oldValue,$el){
+	    	console.log('save')
+	    }
+	    
+	    function onEditableShown(field,row,$el,editable){
+	    	
+	 		$el.next('div').find("button[type='submit']").unbind().click(function(){
+	 			row[field]=$(this).parents('.editable-buttons').prev('.editable-input').find('input').val();
+	 			
+	 			load("POST",JSON.stringify(row),function(json){
+	 				$("#table").bootstrapTable("refresh");
+	 			})
+	 		})
+	    	
+	    }
+	   
+	    $(function () {
+	    	 var $table = $('#table');
+	    	 $table.bootstrapTable({
+		            height: getHeight(),
+		            onLoadSuccess:onloadsuccess,
+		            onEditableShown:onEditableShown,
+		            columns: [
+		                    {
+		                        field: 'express',
+		                        title: 'Cron表达式',
+		                        sortable: true,
+		                        editable: true,
+		                        align: 'center'
+
+		                    }, {
+		                        field: 'triggerName',
+		                        title: 'trigger名称',
+		                        align: 'center',
+		                        sortable: true,
+          
+		                    }, {
+		                        field: 'triggerGroup',
+		                        title: 'triggerGroup',
+		                        align: 'center',
+		                      
+		                    },
+		                    {
+		                        field: 'schedName',
+		                        title: 'schedName',
+		                        align: 'center',
+		                        visible:false
+		                      
+		                    },
+		                    {
+		                        field: 'interface',
+		                        title: 'interface',
+		                        align: 'center',
+		                        sortable: true,
+		                        editable: true
+		                      
+		                    },
+		                    {
+		                        field: 'parameters',
+		                        title: 'parameters',
+		                        align: 'center',
+		                        sortable: true,
+		                        editable: true
+		                    },
+		                    {
+		                        field: '操作',
+		                        title: '操作',
+		                        align: 'center',
+		                        formatter: operateFormatter
+		  					
+		                    }
+		                
+		            ]
+		        });
+	    	// sometimes footer render error.
+	         /*setTimeout(function () {
+	             $table.bootstrapTable('resetView');
+	         }, 200);*/
+	        
+	         $(window).resize(function () {
+	             $table.bootstrapTable('resetView', {
+	                 height: getHeight()
+	             });
+	         });
+	                  
+	    });	  
+
+</script>
+
+
+</body>
+</html>
