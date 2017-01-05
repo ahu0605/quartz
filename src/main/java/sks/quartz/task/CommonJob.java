@@ -1,25 +1,29 @@
 package sks.quartz.task;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
+import org.apache.http.client.ClientProtocolException;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.PersistJobDataAfterExecution;
-import org.quartz.Trigger;
+import org.quartz.TriggerKey;
 import org.quartz.utils.DBConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.JsonObject;
+
+import sks.base.util.HttpUtils;
 import sks.quartz.QuartzPlugin;
 import sks.quartz.handler.Quartz;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
 @PersistJobDataAfterExecution
 @DisallowConcurrentExecution
 public class CommonJob implements Job {
@@ -31,17 +35,49 @@ public class CommonJob implements Job {
     }
 
     public void execute(JobExecutionContext context)
-      throws JobExecutionException
-    {
-    	Trigger t = context.getTrigger();
-    	log.info("---excute---");
-    	try {
-			JsonObject json = getAll(t.getKey().getName(),t.getKey().getGroup());
-			log.info("---excute interface---"+json.toString());
-    	} catch (SQLException e) {
-			log.error("execute error : ", e);
-		}
-    }
+    	      throws JobExecutionException
+    	    {
+    	    	TriggerKey key = context.getTrigger().getKey();    
+    	    	log.info("excute : "+key.getName());
+    	    	JsonObject map = null;
+    			JsonObject parameters = null;
+	    		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    			String lastTime = format.format(context.getTrigger().getPreviousFireTime()!=null?
+    												context.getTrigger().getPreviousFireTime():System.currentTimeMillis()
+    					);
+    			
+    	    	String result ;
+    	    	try {
+    	    
+    				map = getAll(key.getName(),key.getGroup());
+    				
+    				if(map.get("parameters")!=null && !map.get("parameters").isJsonNull()){
+    					parameters = map.get("parameters").getAsJsonObject();   	    		
+    				}else{
+    					parameters = new JsonObject();
+    	    		}
+    				
+    				parameters.addProperty("lastTime", lastTime);
+    				result = HttpUtils.requestPost(map.get("interface").getAsString(),parameters.toString());
+    				log.info("trigger name : "+key.getName()+" interface : "+map.get("interface") + " result : " + result);
+    			} catch (SQLException e) {
+    				log.error("interface is error : ",e);
+    				throw new JobExecutionException("interface is error");
+    			} catch (ClientProtocolException e) {
+    				log.error("interface is error : ",e);
+    				throw new JobExecutionException("interface is error");
+    			} catch (ParseException e) {
+    				log.error("interface is error : ",e);
+    				throw new JobExecutionException("interface is error");
+    			} catch (IOException e) {
+    				log.error("interface is error : ",e);
+    				throw new JobExecutionException("interface is error");
+    			} catch (Exception e) {
+    				log.error("interface is error : ",e);
+    				throw new JobExecutionException("interface is error");
+    			}
+    	    	
+   }
     
     private JsonObject getAll(String name,String group) throws SQLException{
     		

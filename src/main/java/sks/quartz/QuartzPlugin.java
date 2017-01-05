@@ -28,7 +28,7 @@ public class QuartzPlugin implements Plugin{
 
 	private static Logger log = LoggerFactory.getLogger(QuartzPlugin.class); 
 	private static final String INSERT_TASK = "INSERT quartz_post_url(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP,INTERFACE,PARAMETERS) VALUE ('%s','%s','%s','%s','%s')";
-	private static final String UPDATE_TASK = "UPDATE quartz_post_url SET INTERFACE='%s',PARAMETERS='%s' WHERE SCHED_NAME='%s' AND TRIGGER_NAME='%s' AND TRIGGER_GROUP='%s'";
+	private static final String UPDATE_TASK = "UPDATE quartz_post_url SET INTERFACE='%s',PARAMETERS=%s WHERE SCHED_NAME='%s' AND TRIGGER_NAME='%s' AND TRIGGER_GROUP='%s'";
 	private static final String DEL_TASK = "DELETE FROM quartz_post_url WHERE SCHED_NAME='%s' AND TRIGGER_NAME='%s' AND TRIGGER_GROUP='%s'";
 	public static final String JOB_NAME = "job" ;
 	public static final String JOB_GROUP = "group" ;

@@ -130,7 +130,7 @@ public class Quartz extends AbstractHandler{
 				int ret = QuartzPlugin.getInstance().update(triggerKey, 
 					   	obj.get("express").getAsString(), 
 					   		obj.get("interface").getAsString(),  
-									obj.get("parameters").getAsString());
+									obj.get("parameters").isJsonNull()?null:obj.get("parameters").getAsString());
 				reactJson(arg3 ,ret);
 				
 			} catch (SchedulerException  e) {
