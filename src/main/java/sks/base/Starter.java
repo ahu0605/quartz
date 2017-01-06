@@ -38,14 +38,22 @@ public class Starter {
 	public static Properties init() throws IOException{
 		//log.info("path="+ Thread.currentThread().setContextClassLoader());
 		//InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream("config.properties");
-		InputStream is = new FileInputStream(new File(PATH+"/config.properties"));
-		if( is == null){
-			log.error("-----quartz.properties failed-----");
-			throw new RuntimeException();
-		}
+		InputStream is = null;
 		Properties property = new Properties();
-		property.load(is);
-		
+		try{
+			is = new FileInputStream(new File(PATH+"/config.properties"));
+			if( is == null){
+				log.error("-----quartz.properties failed-----");
+				throw new RuntimeException();
+			}
+			property.load(is);
+		}finally{
+			is.close();
+		}
 		return property;	
+	}
+	
+	public static Properties getConfig(){
+		return config;
 	}
 }

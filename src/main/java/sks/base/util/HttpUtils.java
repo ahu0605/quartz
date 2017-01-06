@@ -40,7 +40,7 @@ public class HttpUtils {
 		
 	}
 	
-	public static String requestPost(String wechatUrl ,String param) throws ClientProtocolException,ParseException,IOException,Exception{
+	public static String requestPost(String wechatUrl ,String param) throws ClientProtocolException,ParseException,IOException{
 		
 		CloseableHttpClient httpclient = HttpClients.createDefault(); 
 		CloseableHttpResponse response = null; 
@@ -75,7 +75,7 @@ public class HttpUtils {
             	return result;
             	
             }else{
-            	throw  new  Exception(" response string error ");
+            	throw  new  RuntimeException(wechatUrl + " response string error ");
             }  
         
         } catch (ClientProtocolException e) {  

@@ -36,7 +36,7 @@ public class QuartzPlugin implements Plugin{
 	
 	private final SchedulerFactory sf ;
 
-	private final Scheduler sched ;
+	public final Scheduler sched ;
 	
 	private static QuartzPlugin instance;
 	
@@ -64,7 +64,7 @@ public class QuartzPlugin implements Plugin{
 		
 	}
 	@Override
-	public void init(Properties p) throws Exception {
+	public void init(Properties p) throws SchedulerException {
 		JobKey jobKey = new JobKey(JOB_NAME,JOB_GROUP);
 		//JobDetail job = sched.getJobDetail(jobKey);
 		if( !sched.checkExists(jobKey)){
