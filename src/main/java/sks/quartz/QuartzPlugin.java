@@ -156,8 +156,7 @@ public class QuartzPlugin implements Plugin{
 					} catch (SQLException e) {}
 				}
 		  }
-		
-		  
+		 
 		  return ret;
 	}
 	

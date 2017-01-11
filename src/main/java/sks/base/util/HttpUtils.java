@@ -9,6 +9,7 @@ import java.net.URLConnection;
 import java.util.Map;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpStatus;
 import org.apache.http.ParseException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
@@ -61,9 +62,13 @@ public class HttpUtils {
             
             // 执行post请求.    
             response = httpclient.execute(httpPost);  
-         
+        
+            if(response.getStatusLine().getStatusCode() != HttpStatus.SC_OK){
+            	throw  new  RuntimeException(wechatUrl + " response string error ");
+            }
             // 获取响应实体    
             HttpEntity entity = response.getEntity(); 
+           
             if (entity != null) {  
                 // 打印响应内容长度    
             	logger.info("Response content length: " + entity.getContentLength());  
@@ -97,7 +102,7 @@ public class HttpUtils {
         	throw  new  IOException("httpclient IOException error : ",e);
         
         } finally {
-        	
+        
         	if(response != null){  		
         		try {
 					response.close();
@@ -105,6 +110,10 @@ public class HttpUtils {
 
 					 logger.error("response close error : ",e);
 				}	
+        	}
+        	
+        	if(	httpPost != null){
+        		httpPost.releaseConnection();
         	}
         	
             // 关闭连接,释放资源    

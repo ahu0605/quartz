@@ -1,16 +1,18 @@
 package sks.quartz.task;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Properties;
 
-import org.apache.http.client.ClientProtocolException;
+import org.quartz.CronTrigger;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobBuilder;
@@ -22,7 +24,9 @@ import org.quartz.JobKey;
 import org.quartz.PersistJobDataAfterExecution;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
+import org.quartz.Trigger;
 import org.quartz.TriggerKey;
+import org.quartz.impl.triggers.CronTriggerImpl;
 import org.quartz.jobs.ee.mail.SendMailJob;
 import org.quartz.utils.DBConnectionManager;
 import org.slf4j.Logger;
@@ -45,15 +49,22 @@ public class CommonJob implements Job {
     }
 
     public void execute(JobExecutionContext context) throws JobExecutionException{
-    	    	TriggerKey key = context.getTrigger().getKey();    
+    			
+    			Trigger trigger = context.getTrigger();
+    	    	TriggerKey key = trigger.getKey();    
     	    	log.info("excute : "+key.getName());
     	    	JsonObject map = null;
     			JsonObject parameters = null;
-	    		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    			String lastTime = format.format(context.getTrigger().getPreviousFireTime()!=null?
-    												context.getTrigger().getPreviousFireTime():System.currentTimeMillis()
-    					);
+
+    			String lastTime = null;
+    			if(trigger.getPreviousFireTime()!=null){
+    				lastTime = getPrevTime(trigger.getPreviousFireTime().getTime(),trigger.getNextFireTime().getTime());
+    			}else{
+    				long tmp = System.currentTimeMillis();
+    				lastTime = getPrevTime(tmp,tmp);
+    			}
     			
+    			//System.out.println("lastTime======"+lastTime);
     	    	String result ;
     	    	try {
     	    
@@ -73,7 +84,7 @@ public class CommonJob implements Job {
     				JobExecutionException je = new JobExecutionException(e);
     										je.setUnscheduleFiringTrigger(true);
     				try {
-						sendMail(context.getScheduler(),lastTime);
+						sendMail(context.getScheduler(),lastTime,context.getTrigger().getKey());
 					} catch (UnknownHostException | SchedulerException e1) {
 						log.error("sendmail is error : ",e);
 					}
@@ -121,7 +132,7 @@ public class CommonJob implements Job {
 	
     }
     
-    private void sendMail(Scheduler sched ,String lastTime) throws SchedulerException, UnknownHostException{
+    private void sendMail(Scheduler sched ,String lastTime,TriggerKey key) throws SchedulerException, UnknownHostException{
     	
     	JobKey jobKey = new JobKey("error","quartz ");
     	
@@ -140,12 +151,12 @@ public class CommonJob implements Job {
 			
 		}
     	
-		JobDataMap  data = initJobData(Starter.getConfig(),lastTime);
+		JobDataMap  data = initJobData(Starter.getConfig(),lastTime,key);
 		
 		sched.triggerJob(jobKey, data);
     }
     
-    private JobDataMap initJobData(Properties p,String lastTime) throws UnknownHostException{
+    private JobDataMap initJobData(Properties p,String lastTime,TriggerKey key) throws UnknownHostException{
 
 		JobDataMap data = new JobDataMap();
 		data.put("mail.smtp.port",  p.getProperty("mail.port"));
@@ -156,10 +167,17 @@ public class CommonJob implements Job {
 		data.put(SendMailJob.PROP_USERNAME,  p.getProperty("mail.from"));
 	    data.put(SendMailJob.PROP_PASSWORD, p.getProperty("mail.password"));
 	    data.put(SendMailJob.PROP_SENDER, p.getProperty("mail.from"));
-	    data.put(SendMailJob.PROP_SUBJECT, "timer job is error");		
-	    data.put(SendMailJob.PROP_MESSAGE, InetAddress.getLocalHost().getHostAddress()+" timer job is error lastTime is "+lastTime);	
+	    data.put(SendMailJob.PROP_SUBJECT, "Timer job is error");		
+	    data.put(SendMailJob.PROP_MESSAGE, InetAddress.getLocalHost().getHostAddress()+" Timer job is error key is "+key.getName()+ " lastTime is "+lastTime);	
 	    
 	    return data;
     }
-
+    public static String getPrevTime(Long start ,Long next) {
+    	SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    	if(start != next){	
+    		return format.format(start-(next-start));
+    	}else{
+    		return format.format(start);
+    	}
+	}
 }
